@@ -32,29 +32,14 @@ class PermissionsSeeder extends Seeder
         Permission::create(['name' => 'edit_users']);
         Permission::create(['name' => 'delete_users']);
 
-        // create roles and assign existing permissions
-        $super_admin = Role::create(['name' => 'super_admin']);
-        $super_admin->givePermissionTo('view_dashboard');
-        $product_manager= Role::create(['name' => 'product_manager']);
-        $user_manager= Role::create(['name'=>'user_manager']);
-       
-        // create demo users
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example User',
-            'email' => 'tester@example.com',
-        ]);
-        $user->assignRole($super_admin);
-
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example Admin User',
-            'email' => 'admin@example.com',
-        ]);
-        $user->assignRole($product_manager);
-
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example Super-Admin User',
-            'email' => 'superadmin@example.com',
-        ]);
-        $user->assignRole($user_manager);
+        // super admin
+        $superAdmin = Role::create(["name"=>"super_admin"]);
+        $superAdmin -> givePermissionTo(["view_dashboard","view_products","create_products","edit_products","delete_products","view_categories","create_categories","edit_categories","delete_categories","view_users","create_users","edit_users","delete_users"]);
+        // product manager
+        $productManager = Role::create(["name"=>"product_manager"]);
+        $productManager -> givePermissionTo(["view_dashboard","view_products","view_categories","create_products","edit_products","delete_products","view_categories","create_categories","edit_categories","delete_categories"]);
+        // user manager
+        $userManager = Role::create(["name"=>"user_manager"]);
+        $userManager -> givePermissionTo(["view_dashboard","view_users","create_users","edit_users","delete_users"]);
     }
 }

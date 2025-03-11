@@ -29,8 +29,8 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
             $user->assignRole('super_admin');
-
-            return response()->json(['message' => 'First user created as super_admin'], 201);
+            $token = $user->createToken('NomDuToken')->plainTextToken;
+            return response()->json(['message' => 'First user created as super_admin', 'token' => $token], 201);
         } else {
             $user = User::create([
                 'name' => $request->name,
@@ -42,5 +42,40 @@ class AuthController extends Controller
 
             return response()->json(['token' => $token], 201);
         }
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames()
+            ]
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->tokens->each(function ($token) {
+            $token->delete();
+        });
+
+        return response()->json(['message' => 'Logged out successfully']);
     }
 }
