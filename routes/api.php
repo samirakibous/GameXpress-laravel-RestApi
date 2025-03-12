@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\UserDashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -19,4 +20,7 @@ Route::post('/v1/admin/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/v1/admin/logout', [AuthController::class, 'logout']);
 
 //dashboard
-Route::middleware('auth:sanctum')->get('/v1/admin/dashboard', [DashboardController::class, 'index']);
+Route::middleware(['role:super_admin', 'auth:sanctum'])->group(function () {
+    Route::get('/v1/admin/dashboard', [UserDashboardController::class, 'index']);
+});
+

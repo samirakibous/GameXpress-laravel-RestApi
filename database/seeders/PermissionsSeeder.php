@@ -16,7 +16,7 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        // app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
         Permission::create(['name' => 'view_dashboard']);
