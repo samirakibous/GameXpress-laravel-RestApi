@@ -28,7 +28,8 @@ class ProductController extends Controller
             'stock' => 'required|integer',
             'status' => 'required|string',
             'category_id' => 'required|exists:categories,id',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
+            'images' => 'nullable|array', 
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
         // dd($request->all());
@@ -47,11 +48,17 @@ class ProductController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('products', 'public');
+        
+                // Crée une entrée dans la table 'product_images'
                 $product->images()->create([
                     'image_url' => $path,
-                    'is_primary' => $index === 0 ? true : false,
+                    'is_primary' => $index === 0,
                 ]);
             }
+        
+        
+        
+            
             return response()->json(['message' => 'Produit créé avec succès', 'product' => $product->load('images')]);
         }
 
