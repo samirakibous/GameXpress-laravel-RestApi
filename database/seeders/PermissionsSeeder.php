@@ -16,7 +16,7 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        // app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
         Permission::create(['name' => 'view_dashboard']);
@@ -34,10 +34,10 @@ class PermissionsSeeder extends Seeder
 
         // super admin
         $superAdmin = Role::create(["name"=>"super_admin"]);
-        $superAdmin -> givePermissionTo(["view_dashboard","view_products","create_products","edit_products","delete_products","view_categories","create_categories","edit_categories","delete_categories","view_users","create_users","edit_users","delete_users"]);
+        $superAdmin -> givePermissionTo(["view_dashboard","view_products","create_products","edit_products","delete_products","create_categories","edit_categories","delete_categories","view_users","create_users","edit_users","delete_users"]);
         // product manager
         $productManager = Role::create(["name"=>"product_manager"]);
-        $productManager -> givePermissionTo(["view_dashboard","view_products","view_categories","create_products","edit_products","delete_products","view_categories","create_categories","edit_categories","delete_categories"]);
+        $productManager -> givePermissionTo(["view_dashboard","view_products","create_products","edit_products","delete_products","create_categories","edit_categories","delete_categories"]);
         // user manager
         $userManager = Role::create(["name"=>"user_manager"]);
         $userManager -> givePermissionTo(["view_dashboard","view_users","create_users","edit_users","delete_users"]);
