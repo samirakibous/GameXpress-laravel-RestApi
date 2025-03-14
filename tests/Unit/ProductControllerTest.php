@@ -65,7 +65,7 @@ class ProductControllerTest extends TestCase
 
         // Prepare product data
         $data = [
-            'name' => 'Test Product22',
+            'name' => 'Test Product24',
             'price' => 99.99,
             'stock' => 10,
             'category_id' => $category->id,
@@ -76,6 +76,12 @@ class ProductControllerTest extends TestCase
             ],
             'status' => 'available',
         ];
+
+        // Enregistrer les images dans le disque fictif
+        foreach ($data['images'] as $image) {
+            $image->store('product_images', 'public');
+        }
+
 
         // Make POST request to store the product
         $response = $this->postJson(route('products.store'), $data);
@@ -110,27 +116,18 @@ class ProductControllerTest extends TestCase
 
         // Verify product is in the database
         $this->assertDatabaseHas('products', [
-            'name' => 'Test Product22',
-            'slug' => 'test-product22',
+            'name' => 'Test Product24',
+            'slug' => 'test-product24',
             'price' => 99.99,
             'stock' => 10,
             'category_id' => $category->id,
         ]);
 
-        $product = Product::where('name', 'Test Product22')->first();
-
-        // // Check primary image exists using the fake disk
-        // $primaryImage = $product->images()->where('is_primary', true)->first();
-        // $this->assertNotNull($primaryImage, 'Primary image not found');
-        // Storage::disk('public')->assertExists($primaryImage->image_path);
-
-        // Check other images using the fake disk
-        // $otherImages = $product->images()->where('is_primary', false)->get();
-        // $this->assertCount(2, $otherImages, 'Expected 2 non-primary images');
-
-        // foreach ($otherImages as $image) {
-        //     Storage::disk('public')->assertExists($image->image_path);
-        // }
+        $product = Product::where('name', 'Test Product24')->first();
+        $this->assertDatabaseHas('product_images', [
+            'product_id' => $product->id,
+            'is_primary' => true,
+        ]);
     }
 
     // update test
@@ -211,18 +208,71 @@ class ProductControllerTest extends TestCase
 
         // Refresh product from database
         $product->refresh();
+    }
 
-        // // Verify we have one primary image
-        // $primaryImage = $product->images()->where('is_primary', true)->first();
-        // $this->assertNotNull($primaryImage);
-        // Storage::disk('public')->assertExists($primaryImage->image_path);
+    public function test_deleting_a_product()
+    {
+        // Fake file storage
+        Storage::fake('public');
+        $category = Category::factory()->create();
 
-        // // Verify we have 3 non-primary images
-        // $otherImages = $product->images()->where('is_primary', false)->get();
-        // $this->assertCount(3, $otherImages);
+        // Créer un produit avec des images associées
+        $product = Product::factory()->create([
+            'name' => 'Test Product to Delete',
+            'price' => 99.99,
+            'stock' => 10,
+            'category_id' => $category->id,
+            'status' => 'available',
+        ]);
 
-        // foreach ($otherImages as $image) {
-        //     Storage::disk('public')->assertExists($image->image_path);
-        // }
+        // Créer une image principale et des images supplémentaires pour ce produit
+        $primaryImage = \Illuminate\Http\UploadedFile::fake()->image('primary.jpg');
+        $image1 = \Illuminate\Http\UploadedFile::fake()->image('image1.jpg');
+        $image2 = \Illuminate\Http\UploadedFile::fake()->image('image2.jpg');
+
+        // Stocker les images dans le disque fictif
+        $primaryImage->store('product_images', 'public');
+        $image1->store('product_images', 'public');
+        $image2->store('product_images', 'public');
+
+        // Créer les enregistrements d'images pour ce produit
+        $product->images()->create([
+            'image_url' => 'product_images/primary.jpg',
+            'is_primary' => true
+        ]);
+        $product->images()->create([
+            'image_url' => 'product_images/image1.jpg',
+            'is_primary' => false
+        ]);
+        $product->images()->create([
+            'image_url' => 'product_images/image2.jpg',
+            'is_primary' => false
+        ]);
+
+        // Make DELETE request to delete the product
+        $response = $this->deleteJson(route('products.destroy', $product->id));
+
+        // Assert that the response is successful
+        $response->assertStatus(200)
+            ->assertJson([
+                'status' => 'success',
+                'message' => 'Product deleted successfully',
+            ]);
+
+        // Vérifier que le produit a été supprimé de la base de données
+        $this->assertDatabaseMissing('products', [
+            'id' => $product->id,
+            'name' => 'Test Product to Delete',
+        ]);
+
+        // Vérifier que les images associées au produit ont été supprimées du disque fictif
+        Storage::disk('public')->assertMissing('product_images/primary.jpg');
+        Storage::disk('public')->assertMissing('product_images/image1.jpg');
+        Storage::disk('public')->assertMissing('product_images/image2.jpg');
+
+        // Vérifier que les images ont été supprimées de la table `product_images`
+        $this->assertDatabaseMissing('product_images', [
+            'product_id' => $product->id,
+        ]);
     }
 }
