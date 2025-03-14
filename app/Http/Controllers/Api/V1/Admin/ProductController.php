@@ -15,7 +15,7 @@ class ProductController extends Controller
     {
         $products = Product::with(['images', 'category'])->get();
 
-        return response()->json($products);
+        return response()->json(['status' => 'success', 'products' => $products]);
     }
 
     public function store(Request $request)
@@ -28,7 +28,7 @@ class ProductController extends Controller
             'stock' => 'required|integer',
             'status' => 'required|string',
             'category_id' => 'required|exists:categories,id',
-            'images' => 'nullable|array', 
+            'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
@@ -48,24 +48,23 @@ class ProductController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('products', 'public');
-        
+
                 // Crée une entrée dans la table 'product_images'
                 $product->images()->create([
                     'image_url' => $path,
                     'is_primary' => $index === 0,
                 ]);
             }
-        
-        
-        
-            
-            return response()->json(['message' => 'Produit créé avec succès', 'product' => $product->load('images')]);
         }
 
-        return response()->json(['message' => 'Produit créé avec succès']);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Produit créé avec succès',
+            'product' => $product->load('images')
+        ], 201);
     }
 
-   
+
     public function show($id)
     {
         $product = Product::with(['images', 'category'])->findOrFail($id);

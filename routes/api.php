@@ -37,11 +37,11 @@ Route::middleware(['role:super_admin', 'auth:sanctum'])->group(function () {
 //products
 
 Route::middleware(['auth:sanctum', 'role:product_manager|super_admin'])->group(function () {
-    Route::get('/v1/admin/products', [ProductController::class, 'index']);
-    Route::post('/v1/admin/products', [ProductController::class, 'store']);
-    Route::put('/v1/admin/products/{id}', [ProductController::class, 'update']);
-    Route::get('/v1/admin/products/{id}', [ProductController::class, 'show']);
-    Route::delete('/v1/admin/products/{id}', [ProductController::class, 'destroy']);
+    Route::get('/v1/admin/products', [ProductController::class, 'index'])->name('products.index');
+    Route::post('/v1/admin/products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/v1/admin/products/{id}', [ProductController::class, 'update'])->name('products.update');
+    Route::get('/v1/admin/products/{id}', [ProductController::class, 'show'])->name('products.show');
+    Route::delete('/v1/admin/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
 });
 
 //users
