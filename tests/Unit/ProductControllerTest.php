@@ -65,7 +65,7 @@ class ProductControllerTest extends TestCase
 
         // Prepare product data
         $data = [
-            'name' => 'Test Product21',
+            'name' => 'Test Product22',
             'price' => 99.99,
             'stock' => 10,
             'category_id' => $category->id,
@@ -110,14 +110,14 @@ class ProductControllerTest extends TestCase
 
         // Verify product is in the database
         $this->assertDatabaseHas('products', [
-            'name' => 'Test Product21',
-            'slug' => 'test-product21',
+            'name' => 'Test Product22',
+            'slug' => 'test-product22',
             'price' => 99.99,
             'stock' => 10,
             'category_id' => $category->id,
         ]);
 
-        $product = Product::where('name', 'Test Product21')->first();
+        $product = Product::where('name', 'Test Product22')->first();
 
         // // Check primary image exists using the fake disk
         // $primaryImage = $product->images()->where('is_primary', true)->first();
@@ -127,6 +127,99 @@ class ProductControllerTest extends TestCase
         // Check other images using the fake disk
         // $otherImages = $product->images()->where('is_primary', false)->get();
         // $this->assertCount(2, $otherImages, 'Expected 2 non-primary images');
+
+        // foreach ($otherImages as $image) {
+        //     Storage::disk('public')->assertExists($image->image_path);
+        // }
+    }
+
+    // update test
+    public function test_updating_a_product()
+    {
+        Storage::fake('public');
+        $category = Category::factory()->create();
+        $newCategory = Category::factory()->create();
+
+        $product = Product::factory()->create([
+            'name' => 'Original Product',
+            'category_id' => $category->id,
+            'stock' => 5
+        ]);
+
+        // Create a primary image
+        $product->images()->create([
+            'image_path' => 'test/primary.jpg',
+            'is_primary' => true
+        ]);
+
+        // Create additional images
+        $product->images()->create([
+            'image_path' => 'test/image1.jpg',
+            'is_primary' => false
+        ]);
+
+        $updateData = [
+            'name' => 'Updated Product',
+            'price' => 199.99,
+            'stock' => 20,
+            'category_id' => $newCategory->id,
+            'primary_image' => \Illuminate\Http\UploadedFile::fake()->image('new_primary.jpg'),
+            'images' => [
+                \Illuminate\Http\UploadedFile::fake()->image('new_image1.jpg'),
+                \Illuminate\Http\UploadedFile::fake()->image('new_image2.jpg'),
+                \Illuminate\Http\UploadedFile::fake()->image('new_image3.jpg'),
+            ],
+        ];
+
+        $response = $this->putJson(route('products.update', $product->id), $updateData);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'message',
+                'product' => [
+                    'id',
+                    'name',
+                    'slug',
+                    'price',
+                    'stock',
+                    'category_id',
+                    'status',
+                    'images' => [
+                        '*' => [
+                            'id',
+                            'image_url',
+                            'is_primary',
+                            'created_at',
+                            'updated_at'
+                        ]
+                    ],
+                    'created_at',
+                    'updated_at'
+                ]
+            ]);
+
+        // Check product was updated in database
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'name' => 'Updated Product',
+            'slug' => 'updated-product',
+            'price' => 199.99,
+            'stock' => 20,
+            'category_id' => $newCategory->id,
+            'status' => 'available'
+        ]);
+
+        // Refresh product from database
+        $product->refresh();
+
+        // // Verify we have one primary image
+        // $primaryImage = $product->images()->where('is_primary', true)->first();
+        // $this->assertNotNull($primaryImage);
+        // Storage::disk('public')->assertExists($primaryImage->image_path);
+
+        // // Verify we have 3 non-primary images
+        // $otherImages = $product->images()->where('is_primary', false)->get();
+        // $this->assertCount(3, $otherImages);
 
         // foreach ($otherImages as $image) {
         //     Storage::disk('public')->assertExists($image->image_path);
