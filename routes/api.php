@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\UserDashboardController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController;
 use App\Http\Controllers\Api\V1\Admin\ProductController;
+use App\Http\Controllers\Api\V1\Admin\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -35,10 +36,18 @@ Route::middleware(['role:super_admin', 'auth:sanctum'])->group(function () {
 
 //products
 
-Route::middleware(['auth:sanctum', 'role:product_manager'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:product_manager|super_admin'])->group(function () {
     Route::get('/v1/admin/products', [ProductController::class, 'index']);
     Route::post('/v1/admin/products', [ProductController::class, 'store']);
     Route::put('/v1/admin/products/{id}', [ProductController::class, 'update']);
     Route::get('/v1/admin/products/{id}', [ProductController::class, 'show']);
     Route::delete('/v1/admin/products/{id}', [ProductController::class, 'destroy']);
+});
+
+//users
+Route::middleware(['role:super_admin', 'auth:sanctum'])->group(function () {
+    Route::get('/v1/admin/users', [UsersController::class, 'index']);
+    Route::post('/v1/admin/users', [UsersController::class, 'store']);
+    Route::delete('/v1/admin/users/{id}', [UsersController::class, 'destroy']);
+    Route::put('/v1/admin/users/{id}', [UsersController::class, 'update']);
 });
